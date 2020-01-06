@@ -8,9 +8,14 @@ instances=($@)
 sudo cp -p /vagrant/binaries/kubectl .
 chmod +x kubectl
 
-echo "## Create kubeconfibg"
-INTERNAL_IP=`cat ~/.ssh/config | grep -n1 ${instances[0]} | tail -n1 | awk '{print $NF}'`
+echo "## The kubelet Kubernetes Configuration File"
+
 for servertype in "${instances[@]}"; do
+  if [[ ${servertype} == *master* ]]; then
+    if [ -e ${INTERNAL_IP} ]; then
+      INTERNAL_IP=`cat ~/.ssh/config | grep -n1 ${servertype} | tail -n1 | awk '{print $NF}'`
+		fi
+	else
   ./kubectl config set-cluster kubernetes-the-hard-way \
     --certificate-authority=./ca.pem \
     --embed-certs=true \
@@ -29,10 +34,11 @@ for servertype in "${instances[@]}"; do
     --kubeconfig=${servertype}.kubeconfig
 
   ./kubectl config use-context default --kubeconfig=${servertype}.kubeconfig
+  fi
 done 
 
 echo "## The kube-proxy Kubernetes Configuration File"
-INTERNAL_IP=`cat ~/.ssh/config | grep -n1 ${instances[0]} | tail -n1 | awk '{print $NF}'`
+#INTERNAL_IP=`cat ~/.ssh/config | grep -n1 ${instances[0]} | tail -n1 | awk '{print $NF}'`
 ./kubectl config set-cluster kubernetes-the-hard-way \
   --certificate-authority=./ca.pem \
   --embed-certs=true \

@@ -1,5 +1,3 @@
-echo "## Copy Kubeconfigs"
-
 echo "################################################################################"
 echo "# Start running 06-worker.sh"
 echo "################################################################################"
@@ -22,6 +20,7 @@ if [ $# -lt 1 ]; then
   exit
 fi
 
+echo "## Copy Kubeconfigs"
 for instance in "${instances[@]}"; do
   scp kube-proxy.kubeconfig ${instance}.kubeconfig ${instance}:/tmp
 done

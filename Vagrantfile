@@ -6,11 +6,11 @@
 # backwards compatibility). Please don't change it unless you know what
 # you're doing.
 
-hostname = "node1"
-ip = "192.168.33.11"
-hostname2 = "node2"
+hostname1 = "master1"
+ip1 = "192.168.33.11"
+hostname2 = "worker1"
 ip2 = "192.168.33.12"
-hostname3 = "node3"
+hostname3 = "worker2"
 ip3 = "192.168.33.13"
 
 script = <<SCRIPT
@@ -50,20 +50,20 @@ Vagrant.configure("2") do |config|
 
   # Create a private network, which allows host-only access to the machine
   # using a specific IP.
-  config.vm.define "node1" do |node1|
-    node1.vm.hostname = hostname
-    node1.vm.network "private_network", ip: ip
-    node1.vm.network "forwarded_port", guest: 6443, host: 6443, host_ip: "0.0.0.0"
+  config.vm.define hostname1 do |node|
+    node.vm.hostname = hostname1
+    node.vm.network "private_network", ip: ip1
+    node.vm.network "forwarded_port", guest: 6443, host: 6443, host_ip: "0.0.0.0"
 
     # provisioning
-    node1.vm.provision "file", source: "~/.ssh/keys/vagrant-key.pub", destination: "/home/vagrant/.ssh/id_rsa.pub"
-    node1.vm.provision "file", source: "~/.ssh/keys/vagrant-key", destination: "~/.ssh/id_rsa"
-    node1.vm.provision "shell", inline: "cat ~vagrant/.ssh/id_rsa.pub >> ~vagrant/.ssh/authorized_keys"
-    #node1.vm.provision :shell, :inline => script
-    node1.vm.provision :shell, path: "ssh-config.sh"
+    node.vm.provision "file", source: "~/.ssh/keys/vagrant-key.pub", destination: "/home/vagrant/.ssh/id_rsa.pub"
+    node.vm.provision "file", source: "~/.ssh/keys/vagrant-key", destination: "~/.ssh/id_rsa"
+    node.vm.provision "shell", inline: "cat ~vagrant/.ssh/id_rsa.pub >> ~vagrant/.ssh/authorized_keys"
+    #node.vm.provision :shell, :inline => script
+    node.vm.provision :shell, path: "ssh-config.sh"
   end
 
-  config.vm.define "node2" do |node|
+  config.vm.define hostname2 do |node|
     node.vm.hostname = hostname2
     node.vm.network "private_network", ip: ip2
     #node.vm.network "forwarded_port", guest: 6443, host: 6443, host_ip: "0.0.0.0"
@@ -75,17 +75,17 @@ Vagrant.configure("2") do |config|
     #node.vm.provision :shell, path: "bootstrap.sh"
   end
 
-#  config.vm.define "node3" do |node3|
-#    node3.vm.hostname = hostname3
-#    node3.vm.network "private_network", ip: ip3
-    #node3.vm.network "forwarded_port", guest: 6443, host: 6443, host_ip: "0.0.0.0"
+  config.vm.define hostname3 do |node|
+    node.vm.hostname = hostname3
+    node.vm.network "private_network", ip: ip3
+    #node.vm.network "forwarded_port", guest: 6443, host: 6443, host_ip: "0.0.0.0"
 
     # provisioning
-#    node3.vm.provision "file", source: "~/.ssh/keys/vagrant-key.pub", destination: "~/.ssh/id_rsa.pub"
-#    node3.vm.provision "file", source: "~/.ssh/keys/vagrant-key", destination: "~/.ssh/id_rsa"
-#    node3.vm.provision "shell", inline: "cat ~vagrant/.ssh/id_rsa.pub >> ~vagrant/.ssh/authorized_keys"
-#    node3.vm.provision :shell, path: "ssh-config.sh"
-#  end
+    node.vm.provision "file", source: "~/.ssh/keys/vagrant-key.pub", destination: "~/.ssh/id_rsa.pub"
+    node.vm.provision "file", source: "~/.ssh/keys/vagrant-key", destination: "~/.ssh/id_rsa"
+    node.vm.provision "shell", inline: "cat ~vagrant/.ssh/id_rsa.pub >> ~vagrant/.ssh/authorized_keys"
+    node.vm.provision :shell, path: "ssh-config.sh"
+  end
 
 
   # Create a public network, which generally matched to bridged network.

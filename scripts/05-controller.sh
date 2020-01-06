@@ -75,10 +75,11 @@ for instance in "${instances[@]}"; do
 done
 
 for instance in "${instances[@]}"; do
+	cp -p /vagrant/manifests/kube-apiserver.service .
   INTERNAL_IP=`cat ~/.ssh/config | grep -n1 ${instance} | tail -n1 | awk '{print $NF}'`
-  sed -i s/INTERNAL_IP/${INTERNAL_IP}/g /vagrant/manifests/kube-apiserver.service
-  sed -i s/ETCD_SERVERS/${_etcd_servers}/g /vagrant/manifests/kube-apiserver.service
-  scp /vagrant/manifests/kube-apiserver.service ${instance}:/tmp
+  sed -i s/INTERNAL_IP/${INTERNAL_IP}/g kube-apiserver.service
+  sed -i s/ETCD_SERVERS/${_etcd_servers}/g kube-apiserver.service
+  scp kube-apiserver.service ${instance}:/tmp
   ssh ${instance} "sudo mv /tmp/kube-apiserver.service /etc/systemd/system/"
   ssh ${instance} "cat /etc/systemd/system/kube-apiserver.service"
 done
