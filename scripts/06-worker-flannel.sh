@@ -55,18 +55,18 @@ if [[ ! -e /vagrant/binaries/kubelet ]]; then
     "https://storage.googleapis.com/kubernetes-release/release/$K8S_VER/bin/linux/$K8S_ARCH/kubelet" 
 fi
 
-if [[ ! -e /vagrant/binaries/cni-plugins-linux-amd64-v0.8.2.tgz ]]; then
+if [[ ! -e /vagrant/binaries/containerd-1.2.9.linux-amd64.tar.gz ]]; then
   wget -q --timestamping -P /vagrant/binaries/ \
     "https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.15.0/crictl-v1.15.0-linux-amd64.tar.gz" \
     "https://github.com/opencontainers/runc/releases/download/v1.0.0-rc8/runc.amd64" \
-    "https://github.com/containernetworking/plugins/releases/download/v0.8.2/cni-plugins-linux-amd64-v0.8.2.tgz" \
     "https://github.com/containerd/containerd/releases/download/v1.2.9/containerd-1.2.9.linux-amd64.tar.gz"
+    #"https://github.com/containernetworking/plugins/releases/download/v0.8.2/cni-plugins-linux-amd64-v0.8.2.tgz"
 fi
 
 echo "## Download and Install Worker Binaries"
 for instance in "${instances[@]}"; do
-  scp /vagrant/binaries/cni-plugins-linux-amd64-v0.8.2.tgz \
-      /vagrant/binaries/containerd-1.2.9.linux-amd64.tar.gz \
+  #scp /vagrant/binaries/cni-plugins-linux-amd64-v0.8.2.tgz \
+  scp /vagrant/binaries/containerd-1.2.9.linux-amd64.tar.gz \
       /vagrant/binaries/crictl-v1.15.0-linux-amd64.tar.gz \
       /vagrant/binaries/runc.amd64 \
       /vagrant/binaries/kubectl \
@@ -94,26 +94,11 @@ for instance in "${instances[@]}"; do
     mkdir -p containerd
     tar -xvf /tmp/crictl-v1.15.0-linux-amd64.tar.gz
     tar -xvf /tmp/containerd-1.2.9.linux-amd64.tar.gz -C containerd
-    sudo tar -xvf /tmp/cni-plugins-linux-amd64-v0.8.2.tgz -C /opt/cni/bin/
+    #sudo tar -xvf /tmp/cni-plugins-linux-amd64-v0.8.2.tgz -C /opt/cni/bin/
     sudo mv /tmp/runc.amd64 /tmp/runc
     chmod +x crictl /tmp/kubectl /tmp/kube-proxy /tmp/kubelet /tmp/runc 
     sudo mv crictl /tmp/kubectl /tmp/kube-proxy /tmp/kubelet /tmp/runc /usr/local/bin/
     sudo mv containerd/bin/* /bin/
-  "
-done
-
-echo "## Configure CNI Networking"
-for instance in "${instances[@]}"; do
-  _insnum=`echo ${instance} | rev | cut -c 1`
-  POD_CIDR=10.200.${_insnum}.0\\\/24
-	cp -p /vagrant/manifests/10-bridge.conf .
-  #sed -i s/POD_CIDR/${POD_CIDR}/g bridge.conf
-  #sed -i s/POD/${POD_CIDR}/g bridge.conf
-  sed -i s/POD_CIDR/${POD_CIDR}/g 10-bridge.conf
-  scp 10-bridge.conf /vagrant/manifests/99-loopback.conf ${instance}:/tmp
-  ssh ${instance} "\
-  sudo mv /tmp/10-bridge.conf /etc/cni/net.d/
-  sudo mv /tmp/99-loopback.conf /etc/cni/net.d/
   "
 done
 
@@ -158,6 +143,7 @@ echo "### Create the kubelet-config.yaml configurations file"
 for instance in "${instances[@]}"; do
   _insnum=`echo ${instance} | rev | cut -c 1`
   POD_CIDR=10.200.${_insnum}.0\\\/24
+  POD_CIDR=10.200.0.0\\\/16
 	cp -p /vagrant/manifests/kubelet-config.yaml .
   sed -i s/POD_CIDR/${POD_CIDR}/g kubelet-config.yaml
   sed -i s/INSTANCE/${instance}/g kubelet-config.yaml

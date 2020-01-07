@@ -16,6 +16,10 @@ for instance in "${instances[@]}"; do
   ssh ${instance} "\
     sudo mkdir -p /etc/etcd /var/lib/etcd
     sudo cp /tmp/ca.pem /tmp/kubernetes-key.pem /tmp/kubernetes.pem /etc/etcd/
+    if [[ ! -e /vagrant/binaries/etcd-v3.4.0-linux-amd64.tar.gz ]]; then
+      wget -q --timestamping -P /vagrant/binaries/ \
+        "https://github.com/etcd-io/etcd/releases/download/v3.4.0/etcd-v3.4.0-linux-amd64.tar.gz"
+    fi
     cp -p /vagrant/binaries/etcd-v3.4.0-linux-amd64.tar.gz .
     tar xzf etcd-v3.4.0-linux-amd64.tar.gz 2> /dev/null
     sudo mv etcd-v3.4.0-linux-amd64/etcd* /usr/local/bin/

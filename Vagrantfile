@@ -26,9 +26,10 @@ Vagrant.configure("2") do |config|
 
   # Every Vagrant development environment requires a box. You can search for
   # boxes at https://atlas.hashicorp.com/search.
-  config.vm.box = "generic/centos7"
+  #config.vm.box = "minimal/centos7"
   #config.vm.box = "ubuntu/trusty64"
   #config.vm.box = "bento/ubuntu-18.04"
+  config.vm.box = "oraclelinux/7"
 
   #config.vm.box = "CentOS72_x64"
 
@@ -45,8 +46,13 @@ Vagrant.configure("2") do |config|
   #config.vbguest.auto_update = false
   #config.vbguest.no_remote = true  
   #config.vbguest.iso_path = "/mnt/d/mywork/linux_home/a2-ito/vagrant/VBoxGuestAdditions_6.0.4.iso"
-  config.vbguest.iso_path = "/mnt/d/mywork/linux_home/a2-ito/vagrant/VBoxGuestAdditions_5.2.34.iso"
-  config.vm.synced_folder ".", "/vagrant", disabled: false
+  #config.vbguest.iso_path = "/mnt/d/mywork/linux_home/a2-ito/vagrant/VBoxGuestAdditions_5.2.34.iso"
+  config.vbguest.iso_path = "/home/akihiko/VBoxGuestAdditions_5.1.24.iso"
+  #config.vm.synced_folder ".", "/vagrant", disabled: false
+  config.vm.provider "virtualbox" do |vb|
+    vb.customize ["modifyvm", :id, "--usb", "on"]
+    vb.customize ["modifyvm", :id, "--usbehci", "off"]
+  end
 
   # Create a private network, which allows host-only access to the machine
   # using a specific IP.
@@ -56,8 +62,8 @@ Vagrant.configure("2") do |config|
     node.vm.network "forwarded_port", guest: 6443, host: 6443, host_ip: "0.0.0.0"
 
     # provisioning
-    node.vm.provision "file", source: "~/.ssh/keys/vagrant-key.pub", destination: "/home/vagrant/.ssh/id_rsa.pub"
-    node.vm.provision "file", source: "~/.ssh/keys/vagrant-key", destination: "~/.ssh/id_rsa"
+    node.vm.provision "file", source: "~/.ssh/vagrant-key.pub", destination: "/home/vagrant/.ssh/id_rsa.pub"
+    node.vm.provision "file", source: "~/.ssh/vagrant-key", destination: "~/.ssh/id_rsa"
     node.vm.provision "shell", inline: "cat ~vagrant/.ssh/id_rsa.pub >> ~vagrant/.ssh/authorized_keys"
     #node.vm.provision :shell, :inline => script
     node.vm.provision :shell, path: "ssh-config.sh"
@@ -68,8 +74,8 @@ Vagrant.configure("2") do |config|
     node.vm.network "private_network", ip: ip2
     #node.vm.network "forwarded_port", guest: 6443, host: 6443, host_ip: "0.0.0.0"
 
-    node.vm.provision "file", source: "~/.ssh/keys/vagrant-key.pub", destination: "~/.ssh/id_rsa.pub"
-    node.vm.provision "file", source: "~/.ssh/keys/vagrant-key", destination: "~/.ssh/id_rsa"
+    node.vm.provision "file", source: "~/.ssh/vagrant-key.pub", destination: "~/.ssh/id_rsa.pub"
+    node.vm.provision "file", source: "~/.ssh/vagrant-key", destination: "~/.ssh/id_rsa"
     node.vm.provision "shell", inline: "cat ~vagrant/.ssh/id_rsa.pub >> ~vagrant/.ssh/authorized_keys"
     node.vm.provision :shell, path: "ssh-config.sh"
     #node.vm.provision :shell, path: "bootstrap.sh"
@@ -81,8 +87,8 @@ Vagrant.configure("2") do |config|
     #node.vm.network "forwarded_port", guest: 6443, host: 6443, host_ip: "0.0.0.0"
 
     # provisioning
-    node.vm.provision "file", source: "~/.ssh/keys/vagrant-key.pub", destination: "~/.ssh/id_rsa.pub"
-    node.vm.provision "file", source: "~/.ssh/keys/vagrant-key", destination: "~/.ssh/id_rsa"
+    node.vm.provision "file", source: "~/.ssh/vagrant-key.pub", destination: "~/.ssh/id_rsa.pub"
+    node.vm.provision "file", source: "~/.ssh/vagrant-key", destination: "~/.ssh/id_rsa"
     node.vm.provision "shell", inline: "cat ~vagrant/.ssh/id_rsa.pub >> ~vagrant/.ssh/authorized_keys"
     node.vm.provision :shell, path: "ssh-config.sh"
   end
@@ -128,5 +134,6 @@ Vagrant.configure("2") do |config|
   #   apt-get update
   #   apt-get install -y apache2
   # SHELL
+
 
 end

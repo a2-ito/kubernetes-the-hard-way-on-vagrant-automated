@@ -22,8 +22,16 @@ if [ $# -lt 1 ]; then
   exit
 fi
 
+if [[ ! -e /vagrant/binaries ]]; then
+  mkdir -p /vagrant/binaries
+fi
+
 echo "## Creaet SSH Keys"
 for instance in ${instances[@]}; do
+  if [[ ! -e /vagrant/binaries/cfssl ]]; then
+    curl https://pkg.cfssl.org/R1.2/cfssl_linux-amd64 -o /vagrant/binaries/cfssl
+    curl https://pkg.cfssl.org/R1.2/cfssljson_linux-amd64 -o /vagrant/binaries/cfssljson
+  fi
   ssh ${instance} "\
     sudo cp -p /vagrant/binaries/cfssl /bin/
     sudo cp -p /vagrant/binaries/cfssljson /bin/

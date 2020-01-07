@@ -5,6 +5,23 @@ echo "# Start running 05-controller.sh"
 echo "################################################################################"
 instances=($@)
 
+usage()
+{
+  echo "$0 [node1] [node2] ..."
+}
+
+if [ -z $1 ]; then
+  usage
+  exit
+else
+  expr $1 + 1 >/dev/null 2>&1
+fi
+
+if [ $# -lt 1 ]; then
+  echo "must be more than 1"
+  exit
+fi
+
 echo "## The Encryption Config File"
 ENCRYPTION_KEY=$(head -c 32 /dev/urandom | base64)
 cat > encryption-config.yaml <<EOF
@@ -27,10 +44,13 @@ done
 for instance in "${instances[@]}"; do
   K8S_VER=v1.15.5
   K8S_ARCH=amd64
-  #ssh ${instance} "\
-  #wget -nv https://storage.googleapis.com/kubernetes-release/release/$K8S_VER/bin/linux/$K8S_ARCH/kube-apiserver
-  #wget -nv https://storage.googleapis.com/kubernetes-release/release/$K8S_VER/bin/linux/$K8S_ARCH/kube-controller-manager
-  #wget -nv https://storage.googleapis.com/kubernetes-release/release/$K8S_VER/bin/linux/$K8S_ARCH/kube-scheduler
+  
+  if [[ ! -e /vagrant/binaries/kube-apiserver ]]; then
+    wget -q --timestamping -P /vagrant/binaries/ \
+      "https://storage.googleapis.com/kubernetes-release/release/$K8S_VER/bin/linux/$K8S_ARCH/kube-apiserver" \
+      "https://storage.googleapis.com/kubernetes-release/release/$K8S_VER/bin/linux/$K8S_ARCH/kube-controller-manager" \
+      "https://storage.googleapis.com/kubernetes-release/release/$K8S_VER/bin/linux/$K8S_ARCH/kube-scheduler"
+  fi
   scp /vagrant/binaries/kube-apiserver \
       /vagrant/binaries/kube-controller-manager \
       /vagrant/binaries/kube-scheduler \

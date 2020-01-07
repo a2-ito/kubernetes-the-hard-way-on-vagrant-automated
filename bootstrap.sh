@@ -33,12 +33,12 @@ done
 /vagrant/scripts/05-controller.sh ${masters}
 
 # 06-worker.sh
-/vagrant/scripts/06-worker.sh ${workers}
-exit 0
+#/vagrant/scripts/06-worker.sh ${workers}
+/vagrant/scripts/06-worker-flannel.sh ${workers}
 
 # 07-networking.sh
-/vagrant/scripts/07-networking.sh ${workers}
-#/vagrant/scripts/07-networking-flannel.sh
+#/vagrant/scripts/07-networking.sh ${workers}
+/vagrant/scripts/07-networking-flannel.sh
 #/vagrant/scripts/07-networking-calico.sh
 
 # 08-dns.sh

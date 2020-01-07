@@ -46,23 +46,19 @@ kubectl get pods
 echo "## Vefify connectivity"
 POD0_IP=$(kubectl get pods -o jsonpath="{.items[0].status.podIP}")
 POD1_IP=$(kubectl get pods -o jsonpath="{.items[1].status.podIP}")
-for instance1 in ${instances[@]}; do
-	for instance2 in ${instances[@]}; do
-    ssh ${instance1} "\
-		echo pod on ${instance2}\" => \"${POD0_IP}
-  	kubectl run --image=giantswarm/tiny-tools \
-      --rm --restart=Never -i testpod \
-      --overrides='{ \"apiVersion\": \"v1\", \"spec\": { \"nodeSelector\": { \"kubernetes.io/hostname\": \"${instance2}\" } } }' \
-      -- sh -c \"curl -s --head http://${POD0_IP}\"
-		echo;
-		sleep 5
-		echo pod on ${instance2}\" => \"${POD1_IP}
-  	kubectl run --image=giantswarm/tiny-tools \
-      --rm --restart=Never -i testpod \
-      --overrides='{ \"apiVersion\": \"v1\", \"spec\": { \"nodeSelector\": { \"kubernetes.io/hostname\": \"${instance2}\" } } }' \
-      -- sh -c \"curl -s --head http://${POD1_IP}\"
-		echo;
-		sleep 5
-		"
-  done
+for instance in ${instances[@]}; do
+  echo pod on ${instance}" => "${POD0_IP}
+	kubectl run --image=giantswarm/tiny-tools \
+    --rm --restart=Never -i testpod \
+    --overrides='{"apiVersion": "v1", "spec": {"nodeSelector": {"kubernetes.io/hostname": "'${instance}'"}}}' \
+    -- sh -c "curl -s --head http://${POD0_IP}"
+  echo;
+  sleep 5
+	echo pod on ${instance}" => "${POD1_IP}
+ 	kubectl run --image=giantswarm/tiny-tools \
+    --rm --restart=Never -i testpod \
+    --overrides='{"apiVersion": "v1", "spec": {"nodeSelector": {"kubernetes.io/hostname": "'${instance}'"}}}' \
+    -- sh -c "curl -s --head http://${POD1_IP}"
+  echo;
+	sleep 5
 done

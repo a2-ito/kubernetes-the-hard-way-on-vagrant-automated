@@ -5,6 +5,30 @@ echo "# Start running 03-kubeconfig.sh"
 echo "################################################################################"
 instances=($@)
 
+usage()
+{
+  echo "$0 [node1] [node2] ..."
+}
+
+if [ -z $1 ]; then
+  usage
+  exit
+else
+  expr $1 + 1 >/dev/null 2>&1
+fi
+
+if [ $# -lt 1 ]; then
+  echo "must be more than 1"
+  exit
+fi
+
+K8S_VER=v1.15.5
+K8S_ARCH=amd64
+if [[ ! -e /vagrant/binaries/kubectl ]]; then
+  wget -q --timestamping -P /vagrant/binaries/ \
+    "https://storage.googleapis.com/kubernetes-release/release/$K8S_VER/bin/linux/$K8S_ARCH/kubectl"
+fi
+
 sudo cp -p /vagrant/binaries/kubectl .
 chmod +x kubectl
 
@@ -14,8 +38,8 @@ for servertype in "${instances[@]}"; do
   if [[ ${servertype} == *master* ]]; then
     if [ -e ${INTERNAL_IP} ]; then
       INTERNAL_IP=`cat ~/.ssh/config | grep -n1 ${servertype} | tail -n1 | awk '{print $NF}'`
-		fi
-	else
+    fi
+  else
   ./kubectl config set-cluster kubernetes-the-hard-way \
     --certificate-authority=./ca.pem \
     --embed-certs=true \
