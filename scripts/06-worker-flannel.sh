@@ -55,6 +55,11 @@ if [[ ! -e /vagrant/binaries/kubelet ]]; then
     "https://storage.googleapis.com/kubernetes-release/release/$K8S_VER/bin/linux/$K8S_ARCH/kubelet" 
 fi
 
+if [[ ! -e /vagrant/binaries/cni-plugins-linux-amd64-v0.8.2.tgz ]]; then
+  wget -q --timestamping -P /vagrant/binaries/ \
+    "https://github.com/containernetworking/plugins/releases/download/v0.8.2/cni-plugins-linux-amd64-v0.8.2.tgz"
+fi
+
 echo "## Install Docker"
 for instance in "${instances[@]}"; do
   ssh ${instance} "\
@@ -86,11 +91,6 @@ for instance in "${instances[@]}"; do
       /vagrant/binaries/kube-proxy \
       ${instance}:/tmp
 done
-
-if [[ ! -e /vagrant/binaries/cni-plugins-linux-amd64-v0.8.2.tgz ]]; then
-  wget -q --timestamping -P /vagrant/binaries/ \
-    "https://github.com/containernetworking/plugins/releases/download/v0.8.2/cni-plugins-linux-amd64-v0.8.2.tgz"
-fi
 
 echo "## Create the installation directories"
 for instance in "${instances[@]}"; do
