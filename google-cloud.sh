@@ -136,5 +136,5 @@ for i in 1 2 3; do
     --metadata block-project-ssh-keys=FALSE
 done
 
-echo "ssh -i ~/.ssh/keys/id_rsa -o 'StrictHostKeyChecking no' akihiko@104.154.160.11"
+echo "ssh -i ~/.ssh/keys/id_rsa -o 'StrictHostKeyChecking no' akihiko@[IP]"
 

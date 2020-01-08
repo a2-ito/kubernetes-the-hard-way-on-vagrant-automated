@@ -45,9 +45,7 @@ Vagrant.configure("2") do |config|
 
   #config.vbguest.auto_update = false
   #config.vbguest.no_remote = true  
-  #config.vbguest.iso_path = "/mnt/d/mywork/linux_home/a2-ito/vagrant/VBoxGuestAdditions_6.0.4.iso"
-  #config.vbguest.iso_path = "/mnt/d/mywork/linux_home/a2-ito/vagrant/VBoxGuestAdditions_5.2.34.iso"
-  config.vbguest.iso_path = "/home/akihiko/VBoxGuestAdditions_5.1.24.iso"
+  config.vbguest.iso_path = "../VBoxGuestAdditions_6.0.4.iso"
   #config.vm.synced_folder ".", "/vagrant", disabled: false
   config.vm.provider "virtualbox" do |vb|
     vb.customize ["modifyvm", :id, "--usb", "on"]
