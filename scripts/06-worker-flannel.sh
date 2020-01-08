@@ -55,15 +55,42 @@ if [[ ! -e /vagrant/binaries/kubelet ]]; then
     "https://storage.googleapis.com/kubernetes-release/release/$K8S_VER/bin/linux/$K8S_ARCH/kubelet" 
 fi
 
-curl https://raw.githubusercontent.com/veerendra2/useless-scripts/master/scripts/docker_install.sh | sudo bash
+echo "## Install Docker"
+for instance in "${instances[@]}"; do
+  ssh ${instance} "\
+  if [ -e /etc/redhat-release ]; then
+    if [ -e /etc/oracle-release ]; then
+      sudo yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
+      sudo yum -y install docker-ce docker-ce-cli containerd.io
+    else
+      curl -fsSL https://get.docker.com/ | sh
+    fi
+  fi
+  "
+done
+
+echo "## Start the Worker Services - docker"
+for instance in "${instances[@]}"; do
+  ssh ${instance} "\
+    sudo systemctl daemon-reload
+    sudo systemctl enable docker
+    sudo systemctl start docker
+  "
+done
 
 echo "## Download and Install Worker Binaries"
 for instance in "${instances[@]}"; do
-  scp /vagrant/binaries/kubectl \
+  scp /vagrant/binaries/cni-plugins-linux-amd64-v0.8.2.tgz \
+      /vagrant/binaries/kubectl \
       /vagrant/binaries/kubelet \
       /vagrant/binaries/kube-proxy \
       ${instance}:/tmp
 done
+
+if [[ ! -e /vagrant/binaries/cni-plugins-linux-amd64-v0.8.2.tgz ]]; then
+  wget -q --timestamping -P /vagrant/binaries/ \
+    "https://github.com/containernetworking/plugins/releases/download/v0.8.2/cni-plugins-linux-amd64-v0.8.2.tgz"
+fi
 
 echo "## Create the installation directories"
 for instance in "${instances[@]}"; do
@@ -79,18 +106,20 @@ for instance in "${instances[@]}"; do
 done
 
 #echo "## Install the worker binaries"
-#for instance in "${instances[@]}"; do
-#  ssh ${instance} "\
+for instance in "${instances[@]}"; do
+  ssh ${instance} "\
     #mkdir -p containerd
     #tar -xvf /tmp/crictl-v1.15.0-linux-amd64.tar.gz
     #tar -xvf /tmp/containerd-1.2.9.linux-amd64.tar.gz -C containerd
-    #sudo tar -xvf /tmp/cni-plugins-linux-amd64-v0.8.2.tgz -C /opt/cni/bin/
+    sudo tar -xvf /tmp/cni-plugins-linux-amd64-v0.8.2.tgz -C /opt/cni/bin/
     #sudo mv /tmp/runc.amd64 /tmp/runc
     #chmod +x crictl /tmp/kubectl /tmp/kube-proxy /tmp/kubelet /tmp/runc 
+    chmod +x /tmp/kubectl /tmp/kube-proxy /tmp/kubelet
     #sudo mv crictl /tmp/kubectl /tmp/kube-proxy /tmp/kubelet /tmp/runc /usr/local/bin/
+    sudo mv /tmp/kubectl /tmp/kube-proxy /tmp/kubelet /usr/local/bin/
     #sudo mv containerd/bin/* /bin/
-#  "
-#done
+  "
+done
 
 #echo "## Configure containerd"
 #for instance in "${instances[@]}"; do
