@@ -34,12 +34,12 @@ done
 
 # 06-worker.sh
 #/vagrant/scripts/06-worker.sh ${workers}
-/vagrant/scripts/06-worker-flannel.sh ${workers}
+/vagrant/scripts/06-worker-non-loopback.sh ${workers}
 
 # 07-networking.sh
 #/vagrant/scripts/07-networking.sh ${workers}
-/vagrant/scripts/07-networking-flannel.sh ${workers}
-#/vagrant/scripts/07-networking-calico.sh ${workers}
+#/vagrant/scripts/07-networking-flannel.sh ${workers}
+/vagrant/scripts/07-networking-calico.sh ${workers}
 
 # 08-dns.sh
 /vagrant/scripts/08-dns.sh

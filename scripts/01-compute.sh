@@ -26,6 +26,8 @@ if [[ ! -e /vagrant/binaries ]]; then
   mkdir -p /vagrant/binaries
 fi
 
+chmod 600 ~/.ssh/id_rsa
+
 echo "## Creaet SSH Keys"
 for instance in ${instances[@]}; do
   if [[ ! -e /vagrant/binaries/cfssl ]]; then

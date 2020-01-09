@@ -22,15 +22,15 @@ fi
 
 for instance1 in "${instances[@]}";
 do
-
   for instance2 in "${instances[@]}";
   do
-	  if [ ${instance1} != ${instance2} ]; then
+    if [ ${instance1} != ${instance2} ]; then
       INTERNAL_IP=`cat ~/.ssh/config | grep -n1 ${instance2} | tail -n1 | awk '{print $NF}'`
+      _insnum=`echo ${instance2} | rev | cut -c 1`
       ssh ${instance1} "\
-		  echo "route add -net 10.200.${instance2:4:1}.0 netmask 255.255.255.0 gw ${INTERNAL_IP}"
-		  sudo sh -c \"route add -net 10.200.${instance2:4:1}.0 netmask 255.255.255.0 gw ${INTERNAL_IP}\"
+      echo "route add -net 10.200.${_insnum}.0 netmask 255.255.255.0 gw ${INTERNAL_IP}"
+      sudo sh -c \"route add -net 10.200.${_insnum}.0 netmask 255.255.255.0 gw ${INTERNAL_IP}\"
       "
-	  fi
+    fi
   done
 done

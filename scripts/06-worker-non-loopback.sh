@@ -43,6 +43,7 @@ for instance in "${instances[@]}"; do
   ssh ${instance} "\
     sudo swapoff -a
     sudo swapon --show
+    sed -i -e '/swap/d' /etc/fstab
   "
 done
 
@@ -60,6 +61,14 @@ if [[ ! -e /vagrant/binaries/cni-plugins-linux-amd64-v0.8.2.tgz ]]; then
     "https://github.com/containernetworking/plugins/releases/download/v0.8.2/cni-plugins-linux-amd64-v0.8.2.tgz"
 fi
 
+if [[ ! -e /vagrant/binaries/runc.amd64 ]]; then
+  wget -q --timestamping -P /vagrant/binaries/ \
+    "https://github.com/opencontainers/runc/releases/download/v1.0.0-rc8/runc.amd64" \
+    "https://github.com/containernetworking/plugins/releases/download/v0.8.2/cni-plugins-linux-amd64-v0.8.2.tgz" \
+    "https://github.com/containerd/containerd/releases/download/v1.2.9/containerd-1.2.9.linux-amd64.tar.gz"
+fi
+
+<<COMMENT1
 echo "## Install Docker"
 for instance in "${instances[@]}"; do
   ssh ${instance} "\
@@ -82,10 +91,14 @@ for instance in "${instances[@]}"; do
     sudo systemctl start docker
   "
 done
+COMMENT1
 
 echo "## Download and Install Worker Binaries"
 for instance in "${instances[@]}"; do
   scp /vagrant/binaries/cni-plugins-linux-amd64-v0.8.2.tgz \
+      /vagrant/binaries/containerd-1.2.9.linux-amd64.tar.gz \
+      /vagrant/binaries/crictl-v1.15.0-linux-amd64.tar.gz \
+      /vagrant/binaries/runc.amd64 \
       /vagrant/binaries/kubectl \
       /vagrant/binaries/kubelet \
       /vagrant/binaries/kube-proxy \
@@ -108,44 +121,44 @@ done
 #echo "## Install the worker binaries"
 for instance in "${instances[@]}"; do
   ssh ${instance} "\
-    #mkdir -p containerd
-    #tar -xvf /tmp/crictl-v1.15.0-linux-amd64.tar.gz
-    #tar -xvf /tmp/containerd-1.2.9.linux-amd64.tar.gz -C containerd
+    mkdir -p containerd
+    tar -xvf /tmp/crictl-v1.15.0-linux-amd64.tar.gz
+    tar -xvf /tmp/containerd-1.2.9.linux-amd64.tar.gz -C containerd
     sudo tar -xvf /tmp/cni-plugins-linux-amd64-v0.8.2.tgz -C /opt/cni/bin/
-    #sudo mv /tmp/runc.amd64 /tmp/runc
-    #chmod +x crictl /tmp/kubectl /tmp/kube-proxy /tmp/kubelet /tmp/runc 
+    sudo mv /tmp/runc.amd64 /tmp/runc
+    chmod +x crictl /tmp/kubectl /tmp/kube-proxy /tmp/kubelet /tmp/runc 
     chmod +x /tmp/kubectl /tmp/kube-proxy /tmp/kubelet
-    #sudo mv crictl /tmp/kubectl /tmp/kube-proxy /tmp/kubelet /tmp/runc /usr/local/bin/
-    sudo mv /tmp/kubectl /tmp/kube-proxy /tmp/kubelet /usr/local/bin/
-    #sudo mv containerd/bin/* /bin/
+    sudo mv crictl /tmp/kubectl /tmp/kube-proxy /tmp/kubelet /tmp/runc /usr/local/bin/
+    #sudo mv /tmp/kubectl /tmp/kube-proxy /tmp/kubelet /usr/local/bin/
+    sudo mv containerd/bin/* /bin/
   "
 done
 
-#echo "## Configure containerd"
-#for instance in "${instances[@]}"; do
-#  scp /vagrant/manifests/config.toml ${instance}:/tmp
-#  ssh ${instance} "\
-#  sudo mkdir -p /etc/containerd/
-#  sudo mv /tmp/config.toml /etc/containerd/
-#  "
-#done
+echo "## Configure containerd"
+for instance in "${instances[@]}"; do
+  scp /vagrant/manifests/config.toml ${instance}:/tmp
+  ssh ${instance} "\
+  sudo mkdir -p /etc/containerd/
+  sudo mv /tmp/config.toml /etc/containerd/
+  "
+done
 
-#for instance in "${instances[@]}";
-#do
-#  scp /vagrant/manifests/containerd.service ${instance}:/tmp
-#  ssh ${instance} "\
-#  sudo mv /tmp/containerd.service /etc/systemd/system/
-#  "
-#done
+for instance in "${instances[@]}";
+do
+  scp /vagrant/manifests/containerd.service ${instance}:/tmp
+  ssh ${instance} "\
+  sudo mv /tmp/containerd.service /etc/systemd/system/
+  "
+done
 
-#echo "# Start the Worker Services - containerd"
-#for instance in "${instances[@]}"; do
-#  ssh ${instance} "\
-#    sudo systemctl daemon-reload
-#    sudo systemctl enable containerd
-#    sudo systemctl start containerd
-#  "
-#done
+echo "# Start the Worker Services - containerd"
+for instance in "${instances[@]}"; do
+  ssh ${instance} "\
+    sudo systemctl daemon-reload
+    sudo systemctl enable containerd
+    sudo systemctl start containerd
+  "
+done
 
 echo "## Configure the Kubelet"
 for instance in "${instances[@]}"; do
@@ -172,7 +185,8 @@ done
 
 echo "### Create the kubelet.service systemd unit filea"
 for instance in "${instances[@]}"; do
-	cp -p /vagrant/manifests/kubelet.service.docker ./kubelet.service
+	#cp -p /vagrant/manifests/kubelet.service.docker ./kubelet.service
+	cp -p /vagrant/manifests/kubelet.service ./kubelet.service
   INTERNAL_IP=`cat ~/.ssh/config | grep -n1 ${instance} | tail -n1 | awk '{print $NF}'`
   sed -i s/INTERNAL_IP/${INTERNAL_IP}/g kubelet.service
 	scp kubelet.service ${instance}:/tmp

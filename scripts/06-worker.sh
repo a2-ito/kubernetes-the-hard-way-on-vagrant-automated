@@ -43,6 +43,7 @@ for instance in "${instances[@]}"; do
   ssh ${instance} "\
     sudo swapoff -a
     sudo swapon --show
+    sed -i -e '/swap/d' /etc/fstab
   "
 done
 
