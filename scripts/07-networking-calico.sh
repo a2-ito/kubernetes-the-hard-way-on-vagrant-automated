@@ -1,12 +1,31 @@
 echo "################################################################################"
 echo "# Start running 07-networking-calico.sh"
 echo "################################################################################"
+instances=($@)
 
-echo "## Configure SELinux"
+usage()
+{
+  echo "$0 [node1] [node2] ..."
+}
+
+if [ -z $1 ]; then
+  usage
+  exit
+else
+  expr $1 + 1 >/dev/null 2>&1
+fi
+
+if [ $# -lt 1 ]; then
+  echo "must be more than 1"
+  exit
+fi
+
+echo "## Configure Sysctl"
 for instance in ${instances[@]};
 do
   ssh ${instance} "\
   sudo sysctl net.ipv4.conf.all.forwarding=1
+  sudo sh -c 'echo \"net.ipv4.conf.all.forwarding = 1\" >> /etc/sysctl.conf'
   "
 done
 
