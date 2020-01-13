@@ -6,7 +6,10 @@ Documentation=https://github.com/kubernetes/kubernetes
 ExecStart=/usr/local/bin/kube-scheduler \
   --config=/etc/kubernetes/config/kube-scheduler.yaml \
   --v=2 \
-  --log-file=/var/log/kube-scheduler.log
+  --log-dir=/var/log/kubernetes \
+  --log-file=/var/log/kubernetes/kube-scheduler.log \
+  --logtostderr=false
+
 Restart=on-failure
 RestartSec=5
 

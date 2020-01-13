@@ -5,7 +5,10 @@ Documentation=https://github.com/kubernetes/kubernetes
 [Service]
 ExecStart=/usr/local/bin/kube-proxy \
   --config=/var/lib/kube-proxy/kube-proxy-config.yaml \
-  --log-file=/var/log/kube-proxy.log
+  --log-dir=/var/log/kubernetes \
+  --log-file=/var/log/kubernetes/kube-proxy.log \
+  --logtostderr=false
+
 Restart=on-failure
 RestartSec=5
 

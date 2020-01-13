@@ -78,3 +78,12 @@ do
   "
 done
 
+echo "## mkdir kubernetes log dir"
+for instance in ${instances[@]};
+do
+  ssh ${instance} "\
+  sudo mkdir /var/log/kubernetes/
+	"
+done
+
+

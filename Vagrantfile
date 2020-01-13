@@ -55,9 +55,18 @@ Vagrant.configure("2") do |config|
   # Create a private network, which allows host-only access to the machine
   # using a specific IP.
   config.vm.define hostname1 do |node|
-    node.vm.hostname = hostname1
-    node.vm.network "private_network", ip: ip1
+    hostname = hostname1
+    ip = ip1
+
+    node.vm.hostname = hostname
+    node.vm.network "private_network", ip: ip
     node.vm.network "forwarded_port", guest: 6443, host: 6443, host_ip: "0.0.0.0"
+
+    offset = (ip).split(".")[-1].to_i
+    http_port = 8000 + offset
+    ssh_port = 2200 + offset
+    #node.vm.network "forwarded_port", id: "http", guest: 80, host: http_port
+    node.vm.network "forwarded_port", id: "ssh", guest: 22, host: ssh_port
 
     # provisioning
     node.vm.provision "file", source: "~/.ssh/vagrant-key.pub", destination: "/home/vagrant/.ssh/id_rsa.pub"
@@ -68,9 +77,18 @@ Vagrant.configure("2") do |config|
   end
 
   config.vm.define hostname2 do |node|
-    node.vm.hostname = hostname2
-    node.vm.network "private_network", ip: ip2
+    hostname = hostname2
+    ip = ip2
+
+    node.vm.hostname = hostname
+    node.vm.network "private_network", ip: ip
     #node.vm.network "forwarded_port", guest: 6443, host: 6443, host_ip: "0.0.0.0"
+
+    offset = (ip).split(".")[-1].to_i
+    http_port = 8000 + offset
+    ssh_port = 2200 + offset
+    #node.vm.network "forwarded_port", id: "http", guest: 80, host: http_port
+    node.vm.network "forwarded_port", id: "ssh", guest: 22, host: ssh_port
 
     node.vm.provision "file", source: "~/.ssh/vagrant-key.pub", destination: "~/.ssh/id_rsa.pub"
     node.vm.provision "file", source: "~/.ssh/vagrant-key", destination: "~/.ssh/id_rsa"
@@ -80,9 +98,18 @@ Vagrant.configure("2") do |config|
   end
 
   config.vm.define hostname3 do |node|
-    node.vm.hostname = hostname3
-    node.vm.network "private_network", ip: ip3
+    hostname = hostname3
+    ip = ip3
+
+    node.vm.hostname = hostname
+    node.vm.network "private_network", ip: ip
     #node.vm.network "forwarded_port", guest: 6443, host: 6443, host_ip: "0.0.0.0"
+
+    offset = (ip).split(".")[-1].to_i
+    http_port = 8000 + offset
+    ssh_port = 2200 + offset
+    #node.vm.network "forwarded_port", id: "http", guest: 80, host: http_port
+    node.vm.network "forwarded_port", id: "ssh", guest: 22, host: ssh_port
 
     # provisioning
     node.vm.provision "file", source: "~/.ssh/vagrant-key.pub", destination: "~/.ssh/id_rsa.pub"
