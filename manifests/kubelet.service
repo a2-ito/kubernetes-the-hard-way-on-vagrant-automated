@@ -16,7 +16,8 @@ ExecStart=/usr/local/bin/kubelet \
   --node-ip=INTERNAL_IP \
   --authentication-token-webhook=true \
   --authorization-mode=Webhook \
-  --v=2
+  --v=2 \
+  --log-file=/var/log/kubelet.log
 Restart=on-failure
 RestartSec=5
 

@@ -20,6 +20,21 @@ if [ $# -lt 1 ]; then
   exit
 fi
 
+echo "## Configure CNI Networking"
+for instance in "${instances[@]}"; do
+  _insnum=`echo ${instance} | rev | cut -c 1`
+  POD_CIDR=10.200.${_insnum}.0\\\/24
+	cp -p /vagrant/manifests/10-bridge.conf .
+  #sed -i s/POD_CIDR/${POD_CIDR}/g bridge.conf
+  #sed -i s/POD/${POD_CIDR}/g bridge.conf
+  sed -i s/POD_CIDR/${POD_CIDR}/g 10-bridge.conf
+  scp 10-bridge.conf /vagrant/manifests/99-loopback.conf ${instance}:/tmp
+  ssh ${instance} "\
+  sudo mv /tmp/10-bridge.conf /etc/cni/net.d/
+  sudo mv /tmp/99-loopback.conf /etc/cni/net.d/
+  "
+done
+
 for instance1 in "${instances[@]}";
 do
   for instance2 in "${instances[@]}";

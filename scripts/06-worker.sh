@@ -58,9 +58,17 @@ fi
 
 if [[ ! -e /vagrant/binaries/cni-plugins-linux-amd64-v0.8.2.tgz ]]; then
   wget -q --timestamping -P /vagrant/binaries/ \
-    "https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.15.0/crictl-v1.15.0-linux-amd64.tar.gz" \
+    "https://github.com/containernetworking/plugins/releases/download/v0.8.2/cni-plugins-linux-amd64-v0.8.2.tgz"
+fi
+
+if [[ ! -e /vagrant/binaries/crictl-v1.15.0-linux-amd64.tar.gz ]]; then
+  wget -q --timestamping -P /vagrant/binaries/ \
+    "https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.15.0/crictl-v1.15.0-linux-amd64.tar.gz"
+fi
+
+if [[ ! -e /vagrant/binaries/runc.amd64 ]]; then
+  wget -q --timestamping -P /vagrant/binaries/ \
     "https://github.com/opencontainers/runc/releases/download/v1.0.0-rc8/runc.amd64" \
-    "https://github.com/containernetworking/plugins/releases/download/v0.8.2/cni-plugins-linux-amd64-v0.8.2.tgz" \
     "https://github.com/containerd/containerd/releases/download/v1.2.9/containerd-1.2.9.linux-amd64.tar.gz"
 fi
 
@@ -100,21 +108,6 @@ for instance in "${instances[@]}"; do
     chmod +x crictl /tmp/kubectl /tmp/kube-proxy /tmp/kubelet /tmp/runc 
     sudo mv crictl /tmp/kubectl /tmp/kube-proxy /tmp/kubelet /tmp/runc /usr/local/bin/
     sudo mv containerd/bin/* /bin/
-  "
-done
-
-echo "## Configure CNI Networking"
-for instance in "${instances[@]}"; do
-  _insnum=`echo ${instance} | rev | cut -c 1`
-  POD_CIDR=10.200.${_insnum}.0\\\/24
-	cp -p /vagrant/manifests/10-bridge.conf .
-  #sed -i s/POD_CIDR/${POD_CIDR}/g bridge.conf
-  #sed -i s/POD/${POD_CIDR}/g bridge.conf
-  sed -i s/POD_CIDR/${POD_CIDR}/g 10-bridge.conf
-  scp 10-bridge.conf /vagrant/manifests/99-loopback.conf ${instance}:/tmp
-  ssh ${instance} "\
-  sudo mv /tmp/10-bridge.conf /etc/cni/net.d/
-  sudo mv /tmp/99-loopback.conf /etc/cni/net.d/
   "
 done
 
