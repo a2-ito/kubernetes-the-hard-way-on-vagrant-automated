@@ -20,6 +20,17 @@ if [ $# -lt 1 ]; then
   exit
 fi
 
+echo "## Install libseccomp"
+for instance in ${instances[@]}; do
+  ssh -oStrictHostKeyChecking=no ${instance} "\
+    if [ -e /etc/redhat-release ]; then
+      sudo yum install -y libseccomp-dev
+    else
+      sudo apt install -y libseccomp-dev
+    fi
+  "
+done
+
 echo "## Copy Kubeconfigs"
 for instance in "${instances[@]}"; do
   scp kube-proxy.kubeconfig ${instance}.kubeconfig ${instance}:/tmp
@@ -27,7 +38,7 @@ done
 
 
 for instance in "${instances[@]}"; do
-  ssh ${instance} "\
+  ssh -oStrictHostKeyChecking=no ${instance} "\
   if [ -e /etc/redhat-release ]; then
     sudo yum -y -q update
   	sudo yum -y -q install socat conntrack ipset
@@ -40,53 +51,56 @@ done
 
 echo "## Disable Swap"
 for instance in "${instances[@]}"; do
-  ssh ${instance} "\
+  ssh -oStrictHostKeyChecking=no ${instance} "\
     sudo swapoff -a
-    sudo swapon --show
-    sed -i -e '/swap/d' /etc/fstab
   "
 done
+#sudo swapon --show
+#sed -i -e '/swap/d' /etc/fstab
 
-K8S_VER=v1.15.5
-K8S_ARCH=amd64
-
-if [[ ! -e /vagrant/binaries/kubelet ]]; then
-  wget -q --timestamping -P /vagrant/binaries/ \
+echo "## Download Worker binaries"
+if [[ ! -e ./binaries/kubelet ]]; then
+  echo "#### Downloading kube-proxy/kubelet"
+  wget -q --timestamping -P ./binaries/ \
     "https://storage.googleapis.com/kubernetes-release/release/$K8S_VER/bin/linux/$K8S_ARCH/kube-proxy" \
     "https://storage.googleapis.com/kubernetes-release/release/$K8S_VER/bin/linux/$K8S_ARCH/kubelet" 
 fi
 
-if [[ ! -e /vagrant/binaries/cni-plugins-linux-amd64-v0.8.2.tgz ]]; then
-  wget -q --timestamping -P /vagrant/binaries/ \
-    "https://github.com/containernetworking/plugins/releases/download/v0.8.2/cni-plugins-linux-amd64-v0.8.2.tgz"
+if [[ ! -e ./binaries/cni-plugins-linux-amd64-${CNI_VER}.tgz ]]; then
+  echo "#### Downloading cni-plugins"
+  wget -q --timestamping -P ./binaries/ \
+    "https://github.com/containernetworking/plugins/releases/download/${CNI_VER}/cni-plugins-linux-amd64-${CNI_VER}.tgz"
 fi
 
-if [[ ! -e /vagrant/binaries/crictl-v1.15.0-linux-amd64.tar.gz ]]; then
-  wget -q --timestamping -P /vagrant/binaries/ \
-    "https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.15.0/crictl-v1.15.0-linux-amd64.tar.gz"
+if [[ ! -e ./binaries/crictl-${CRI_VER}-linux-amd64.tar.gz ]]; then
+  echo "#### Downloading crictl"
+  wget -q --timestamping -P ./binaries/ \
+    "https://github.com/kubernetes-sigs/cri-tools/releases/download/${CRI_VER}/crictl-${CRI_VER}-linux-amd64.tar.gz"
 fi
 
-if [[ ! -e /vagrant/binaries/runc.amd64 ]]; then
-  wget -q --timestamping -P /vagrant/binaries/ \
-    "https://github.com/opencontainers/runc/releases/download/v1.0.0-rc8/runc.amd64" \
-    "https://github.com/containerd/containerd/releases/download/v1.2.9/containerd-1.2.9.linux-amd64.tar.gz"
+if [[ ! -e ./binaries/runc.amd64 ]]; then
+  echo "#### Downloading runc/cotainerd"
+  wget -q --timestamping -P ./binaries/ \
+    "https://github.com/opencontainers/runc/releases/download/${RUNC_VER}/runc.amd64" \
+    "https://github.com/containerd/containerd/releases/download/v${CONTAINERD_VER}/containerd-${CONTAINERD_VER}.linux-amd64.tar.gz"
 fi
+#		"https://github.com/containerd/containerd/releases/download/v1.3.6/containerd-1.3.6-linux-amd64.tar.gz"
 
-echo "## Download and Install Worker Binaries"
+echo "## Install Worker Binaries"
 for instance in "${instances[@]}"; do
-  scp /vagrant/binaries/cni-plugins-linux-amd64-v0.8.2.tgz \
-      /vagrant/binaries/containerd-1.2.9.linux-amd64.tar.gz \
-      /vagrant/binaries/crictl-v1.15.0-linux-amd64.tar.gz \
-      /vagrant/binaries/runc.amd64 \
-      /vagrant/binaries/kubectl \
-      /vagrant/binaries/kubelet \
-      /vagrant/binaries/kube-proxy \
+  scp ./binaries/cni-plugins-linux-amd64-v0.8.6.tgz \
+      ./binaries/containerd-${CONTAINERD_VER}.linux-amd64.tar.gz \
+      ./binaries/crictl-${CRI_VER}-linux-amd64.tar.gz \
+      ./binaries/runc.amd64 \
+      ./binaries/kubectl \
+      ./binaries/kubelet \
+      ./binaries/kube-proxy \
       ${instance}:/tmp
 done
 
 echo "## Create the installation directories"
 for instance in "${instances[@]}"; do
-  ssh ${instance} "\
+  ssh -oStrictHostKeyChecking=no ${instance} "\
     sudo mkdir -p \
       /etc/cni/net.d \
       /opt/cni/bin \
@@ -99,11 +113,11 @@ done
 
 echo "## Install the worker binaries"
 for instance in "${instances[@]}"; do
-  ssh ${instance} "\
+  ssh -oStrictHostKeyChecking=no ${instance} "\
     mkdir -p containerd
-    tar -xvf /tmp/crictl-v1.15.0-linux-amd64.tar.gz
-    tar -xvf /tmp/containerd-1.2.9.linux-amd64.tar.gz -C containerd
-    sudo tar -xvf /tmp/cni-plugins-linux-amd64-v0.8.2.tgz -C /opt/cni/bin/
+    tar -xvf /tmp/crictl-v1.18.0-linux-amd64.tar.gz
+    tar -xvf /tmp/containerd-${CONTAINERD_VER}.linux-amd64.tar.gz -C containerd
+    sudo tar -xvf /tmp/cni-plugins-linux-amd64-v0.8.6.tgz -C /opt/cni/bin/
     sudo mv /tmp/runc.amd64 /tmp/runc
     chmod +x crictl /tmp/kubectl /tmp/kube-proxy /tmp/kubelet /tmp/runc 
     sudo mv crictl /tmp/kubectl /tmp/kube-proxy /tmp/kubelet /tmp/runc /usr/local/bin/
@@ -113,8 +127,8 @@ done
 
 echo "## Configure containerd"
 for instance in "${instances[@]}"; do
-  scp /vagrant/manifests/config.toml ${instance}:/tmp
-  ssh ${instance} "\
+  scp ./manifests/config.toml ${instance}:/tmp
+  ssh -oStrictHostKeyChecking=no ${instance} "\
   sudo mkdir -p /etc/containerd/
   sudo mv /tmp/config.toml /etc/containerd/
   "
@@ -122,15 +136,15 @@ done
 
 for instance in "${instances[@]}";
 do
-  scp /vagrant/manifests/containerd.service ${instance}:/tmp
-  ssh ${instance} "\
+  scp ./manifests/containerd.service ${instance}:/tmp
+  ssh -oStrictHostKeyChecking=no ${instance} "\
   sudo mv /tmp/containerd.service /etc/systemd/system/
   "
 done
 
 echo "# Start the Worker Services - containerd"
 for instance in "${instances[@]}"; do
-  ssh ${instance} "\
+  ssh -oStrictHostKeyChecking=no ${instance} "\
     sudo systemctl daemon-reload
     sudo systemctl enable containerd
     sudo systemctl start containerd
@@ -142,7 +156,7 @@ done
 echo "## Configure the Kubelet"
 for instance in "${instances[@]}"; do
   scp ca.pem ${instance}.pem ${instance}-key.pem ${instance}:/tmp
-  ssh ${instance} "\
+  ssh -oStrictHostKeyChecking=no ${instance} "\
   sudo mv /tmp/${instance}-key.pem /tmp/${instance}.pem /var/lib/kubelet/
   sudo mv /tmp/ca.pem /var/lib/kubernetes/
   "
@@ -152,22 +166,24 @@ echo "### Create the kubelet-config.yaml configurations file"
 for instance in "${instances[@]}"; do
   _insnum=`echo ${instance} | rev | cut -c 1`
   POD_CIDR=10.200.${_insnum}.0\\\/24
-	cp -p /vagrant/manifests/kubelet-config.yaml .
+	cp -p ./manifests/kubelet-config.yaml .
   sed -i s/POD_CIDR/${POD_CIDR}/g kubelet-config.yaml
   sed -i s/INSTANCE/${instance}/g kubelet-config.yaml
   scp kubelet-config.yaml ${instance}:/tmp
-  ssh ${instance} "\
+  ssh -oStrictHostKeyChecking=no ${instance} "\
     sudo mv /tmp/kubelet-config.yaml /var/lib/kubelet/
   "
 done
 
 echo "### Create the kubelet.service systemd unit filea"
 for instance in "${instances[@]}"; do
-	cp -p /vagrant/manifests/kubelet.service .
-  INTERNAL_IP=`cat ~/.ssh/config | grep -n1 ${instance} | tail -n1 | awk '{print $NF}'`
-  sed -i s/INTERNAL_IP/${INTERNAL_IP}/g kubelet.service
+	cp -p ./manifests/kubelet.service .
+  #INTERNAL_IP=`cat ~/.ssh/config | grep -n1 ${instance} | tail -n1 | awk '{print $NF}'`
+  #INTERNAL_IP=`ssh ${instance} hostname -i | awk '{print $NF}'`
+  INTERNAL_IP=`ssh -oStrictHostKeyChecking=no ${instance} "ip --oneline --family inet address show dev ${NIF}" |  cut -f1 -d'/' | awk '{print $NF}'`
+ 	sed -i s/INTERNAL_IP/${INTERNAL_IP}/g kubelet.service
 	scp kubelet.service ${instance}:/tmp
-  ssh ${instance} "\
+  ssh -oStrictHostKeyChecking=no ${instance} "\
     sudo mv /tmp/kubelet.service /etc/systemd/system/
     sudo mv /tmp/${instance}.kubeconfig /var/lib/kubelet/kubeconfig
   "
@@ -175,7 +191,7 @@ done
 
 echo "# Start the Worker Services - kubelet"
 for instance in "${instances[@]}"; do
-  ssh ${instance} "\
+  ssh -oStrictHostKeyChecking=no ${instance} "\
     sudo systemctl daemon-reload
     sudo systemctl enable kubelet
     sudo systemctl start kubelet
@@ -183,7 +199,7 @@ for instance in "${instances[@]}"; do
 done
 
 for instance in "${instances[@]}"; do
-  ssh ${instance} "\
+  ssh -oStrictHostKeyChecking=no ${instance} "\
     sudo systemctl status kubelet
   "
 done
@@ -193,29 +209,29 @@ echo "# Configure the Kubernetes Proxy"
 echo "######################################################################"
 
 for instance in "${instances[@]}"; do
-  ssh ${instance} "\
+  ssh -oStrictHostKeyChecking=no ${instance} "\
     sudo mv /tmp/kube-proxy.kubeconfig /var/lib/kube-proxy/kubeconfig
   "
 done
 
 for instance in "${instances[@]}"; do
-  scp /vagrant/manifests/kube-proxy-config.yaml ${instance}:/tmp
-  ssh ${instance} "\
+  scp ./manifests/kube-proxy-config.yaml ${instance}:/tmp
+  ssh -oStrictHostKeyChecking=no ${instance} "\
     sudo mv /tmp/kube-proxy-config.yaml /var/lib/kube-proxy
   "
 done
 
 echo "## Create the kube-proxy.service systemd unit file"
 for instance in "${instances[@]}"; do
-  scp /vagrant/manifests/kube-proxy.service ${instance}:/tmp
-	ssh ${instance} "\
+  scp ./manifests/kube-proxy.service ${instance}:/tmp
+	ssh -oStrictHostKeyChecking=no ${instance} "\
     sudo mv /tmp/kube-proxy.service /etc/systemd/system/
   "
 done
 
 echo "## Start the Worker Services - kube-proxy"
 for instance in "${instances[@]}"; do
-  ssh ${instance} "\
+  ssh -oStrictHostKeyChecking=no ${instance} "\
     sudo systemctl daemon-reload
     sudo systemctl enable kube-proxy
     sudo systemctl start kube-proxy
@@ -223,7 +239,7 @@ for instance in "${instances[@]}"; do
 done
 
 for instance in "${instances[@]}"; do
-  ssh ${instance} "\
+  ssh -oStrictHostKeyChecking=no ${instance} "\
     sudo systemctl status kube-proxy
   "
 done

@@ -28,8 +28,8 @@ Vagrant.configure("2") do |config|
   # boxes at https://atlas.hashicorp.com/search.
   #config.vm.box = "minimal/centos7"
   #config.vm.box = "ubuntu/trusty64"
-  #config.vm.box = "bento/ubuntu-18.04"
-  config.vm.box = "oraclelinux/7"
+  #config.vm.box = "minimal/jessie64"
+  config.vm.box = "bento/ubuntu-18.04"
 
   #config.vm.box = "CentOS72_x64"
 
@@ -74,6 +74,10 @@ Vagrant.configure("2") do |config|
     node.vm.provision "shell", inline: "cat ~vagrant/.ssh/id_rsa.pub >> ~vagrant/.ssh/authorized_keys"
     #node.vm.provision :shell, :inline => script
     node.vm.provision :shell, path: "ssh-config.sh"
+    node.vm.provision "shell", inline: "pwd; ls -l"
+    node.vm.provision "shell", inline: "cp -pr /vagrant/bootstrap.sh ~vagrant"
+    node.vm.provision "shell", inline: "cp -pr /vagrant/scripts/ ~vagrant"
+    node.vm.provision "shell", inline: "cp -pr /vagrant/manifests/ ~vagrant"
   end
 
   config.vm.define hostname2 do |node|
@@ -116,6 +120,7 @@ Vagrant.configure("2") do |config|
     node.vm.provision "file", source: "~/.ssh/vagrant-key", destination: "~/.ssh/id_rsa"
     node.vm.provision "shell", inline: "cat ~vagrant/.ssh/id_rsa.pub >> ~vagrant/.ssh/authorized_keys"
     node.vm.provision :shell, path: "ssh-config.sh"
+    #node.vm.provision :shell, path: "bootstrap.sh"
   end
 
 

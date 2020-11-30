@@ -189,7 +189,7 @@ spec:
         args:
         - --ip-masq
         - --kube-subnet-mgr
-        - --iface=eth1
+        - --iface=NIF
         resources:
           requests:
             cpu: "100m"

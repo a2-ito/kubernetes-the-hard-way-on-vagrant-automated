@@ -25,7 +25,6 @@ ExecStart=/usr/local/bin/kube-apiserver \
   --kubelet-client-certificate=/var/lib/kubernetes/kubernetes.pem \
   --kubelet-client-key=/var/lib/kubernetes/kubernetes-key.pem \
   --kubelet-https=true \
-  --runtime-config=api/all \
   --service-account-key-file=/var/lib/kubernetes/service-account.pem \
   --service-cluster-ip-range=10.32.0.0/24 \
   --service-node-port-range=30000-32767 \
@@ -34,8 +33,7 @@ ExecStart=/usr/local/bin/kube-apiserver \
   --requestheader-client-ca-file=/var/lib/kubernetes/ca.pem \
   --v=2 \
   --log-dir=/var/log/kubernetes/ \
-  --log-file=/var/log/kubernetes/kube-apiserver.log \
-  --logtostderr=false 
+  --log-file=/var/log/kubernetes/kube-apiserver.log 
 Restart=on-failure
 RestartSec=5
 

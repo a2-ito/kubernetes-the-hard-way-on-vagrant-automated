@@ -7,20 +7,20 @@ instances=($@)
 
 for instance in "${instances[@]}";
 do
-  scp ca.pem ca-key.pem kubernetes-key.pem kubernetes.pem \
+  scp -oStrictHostKeyChecking=no ca.pem ca-key.pem kubernetes-key.pem kubernetes.pem \
       service-account-key.pem service-account.pem ${instance}:/tmp
 done
 
 echo "## Install etcd binaries"
 for instance in "${instances[@]}"; do
-  ssh ${instance} "\
+  ssh -oStrictHostKeyChecking=no ${instance} "\
     sudo mkdir -p /etc/etcd /var/lib/etcd
     sudo cp /tmp/ca.pem /tmp/kubernetes-key.pem /tmp/kubernetes.pem /etc/etcd/
-    if [[ ! -e /vagrant/binaries/etcd-v3.4.0-linux-amd64.tar.gz ]]; then
-      wget -q --timestamping -P /vagrant/binaries/ \
+    if [[ ! -e ./binaries/etcd-v3.4.0-linux-amd64.tar.gz ]]; then
+      wget -q --timestamping -P ./binaries/ \
         "https://github.com/etcd-io/etcd/releases/download/v3.4.0/etcd-v3.4.0-linux-amd64.tar.gz"
     fi
-    cp -p /vagrant/binaries/etcd-v3.4.0-linux-amd64.tar.gz .
+    cp -p ./binaries/etcd-v3.4.0-linux-amd64.tar.gz .
     tar xzf etcd-v3.4.0-linux-amd64.tar.gz 2> /dev/null
     sudo mv etcd-v3.4.0-linux-amd64/etcd* /usr/local/bin/
     "
@@ -28,7 +28,10 @@ done
 
 echo "## Configure the etcd Server"
 for instance in "${instances[@]}"; do
-  export INTERNAL_IP=`cat ~/.ssh/config | grep -n1 ${instance} | tail -n1 | awk '{print $NF}'`
+  #export INTERNAL_IP=`cat ~/.ssh/config | grep -n1 ${instance} | tail -n1 | awk '{print $NF}'`
+  #export INTERNAL_IP=`hostname -i | awk '{print $NF}'`
+  INTERNAL_IP=`ssh -oStrictHostKeyChecking=no ${instance} "ip --oneline --family inet address show dev ${NIF}" |  cut -f1 -d'/' | awk '{print $NF}'`
+  #export INTERNAL_IP=`ssh -oStrictHostKeyChecking=no ${instance} "ip --oneline --family inet address show dev ${NIF}" | sed 's/ +/ /g' | cut -f4 -d' ' | cut -f1 -d'/'`
   if [ -n "${_initial_cluster}" ]; then
     _initial_cluster=${_initial_cluster},${instance}=https:\\\/\\\/${INTERNAL_IP}:2380
   else
@@ -67,7 +70,8 @@ RestartSec=5
 WantedBy=multi-user.target
 EOF
   #export INTERNAL_IP=${instance}
-  export INTERNAL_IP=`cat ~/.ssh/config | grep -n1 ${instance} | tail -n1 | awk '{print $NF}'`
+  #export INTERNAL_IP=`cat ~/.ssh/config | grep -n1 ${instance} | tail -n1 | awk '{print $NF}'`
+  INTERNAL_IP=`ssh -oStrictHostKeyChecking=no ${instance} "ip --oneline --family inet address show dev ${NIF}" |  cut -f1 -d'/' | awk '{print $NF}'`
   export ETCD_NAME=${instance}
   sed -i s/INTERNAL_IP/${INTERNAL_IP}/g etcd.service
   sed -i s/ETCD_NAME/${ETCD_NAME}/g etcd.service
@@ -76,12 +80,12 @@ EOF
   #sed -e 's/INITIAL_CLUSTER/http:\//g' etcd.service
 
   scp etcd.service ${instance}:/tmp
-  ssh ${instance} "sudo mv /tmp/etcd.service /etc/systemd/system/"
+  ssh -oStrictHostKeyChecking=no ${instance} "sudo mv /tmp/etcd.service /etc/systemd/system/"
 done
 
 echo "## Start etcd Service"
 for instance in "${instances[@]}"; do
-  ssh ${instance} "\
+  ssh -oStrictHostKeyChecking=no ${instance} "\
     sudo systemctl daemon-reload
     sudo systemctl enable etcd
     sudo systemctl start etcd &
@@ -90,7 +94,7 @@ done
 
 echo "## Start running 04-etcd.sh"
 for instance in "${instances[@]}"; do
-  ssh ${instance} "\
+  ssh -oStrictHostKeyChecking=no ${instance} "\
   sudo ETCDCTL_API=3 /usr/local/bin/etcdctl member list \
     --endpoints=https://127.0.0.1:2379 \
     --cacert=/etc/etcd/ca.pem \

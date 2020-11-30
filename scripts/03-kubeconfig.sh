@@ -22,14 +22,13 @@ if [ $# -lt 1 ]; then
   exit
 fi
 
-K8S_VER=v1.15.5
-K8S_ARCH=amd64
-if [[ ! -e /vagrant/binaries/kubectl ]]; then
-  wget -q --timestamping -P /vagrant/binaries/ \
+echo "## Install kubectl"
+if [[ ! -e ./binaries/kubectl ]]; then
+  wget -q --timestamping -P ./binaries/ \
     "https://storage.googleapis.com/kubernetes-release/release/$K8S_VER/bin/linux/$K8S_ARCH/kubectl"
 fi
 
-sudo cp -p /vagrant/binaries/kubectl .
+sudo cp -p ./binaries/kubectl .
 chmod +x kubectl
 
 echo "## The kubelet Kubernetes Configuration File"
@@ -37,7 +36,10 @@ echo "## The kubelet Kubernetes Configuration File"
 for servertype in "${instances[@]}"; do
   if [[ ${servertype} == *master* ]]; then
     if [ -e ${INTERNAL_IP} ]; then
-      INTERNAL_IP=`cat ~/.ssh/config | grep -n1 ${servertype} | tail -n1 | awk '{print $NF}'`
+      #INTERNAL_IP=`cat ~/.ssh/config | grep -n1 ${servertype} | tail -n1 | awk '{print $NF}'`
+      #INTERNAL_IP=`hostname -i`
+			#INTERNAL_IP=`ssh ${servertype} "ip --oneline --family inet address show dev ${NIF}" | cut -f4 -d' ' | cut -f1 -d'/'`
+      INTERNAL_IP=`ssh -oStrictHostKeyChecking=no ${servertype} "ip --oneline --family inet address show dev ${NIF}" |  cut -f1 -d'/' | awk '{print $NF}'`
     fi
   else
   ./kubectl config set-cluster kubernetes-the-hard-way \

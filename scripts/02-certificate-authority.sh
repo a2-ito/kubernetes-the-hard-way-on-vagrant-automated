@@ -67,8 +67,11 @@ EOF
 _instances=`echo "${instances[@]}" | sed -e 's/ /,/g'`
 
 for instance in "${instances[@]}"; do
-  INTERNAL_IP=`cat ~/.ssh/config | grep -n1 ${instance} | tail -n1 | awk '{print $NF}'`
-  if [ -n "${_node_ips}" ]; then
+  #INTERNAL_IP=`cat ~/.ssh/config | grep -n1 ${instance} | tail -n1 | awk '{print $NF}'`
+  #INTERNAL_IP=`hostname -i | awk '{print $NF}'`
+	#INTERNAL_IP=`ssh ${servertype} "ip --oneline --family inet address show dev ${NIF}" | cut -f4 -d' ' | cut -f1 -d'/'`
+  INTERNAL_IP=`ssh -oStrictHostKeyChecking=no ${instance} "ip --oneline --family inet address show dev ${NIF}" |  cut -f1 -d'/' | awk '{print $NF}'`
+	if [ -n "${_node_ips}" ]; then
     _node_ips=${_node_ips},${INTERNAL_IP}
   else
     _node_ips=${INTERNAL_IP}

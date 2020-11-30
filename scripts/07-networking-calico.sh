@@ -30,7 +30,7 @@ do
 done
 
 POD_CIDR=10.200.0.0\\\/16
-cp -p /vagrant/manifests/calico.yaml .
+cp -p ./manifests/calico.yaml .
 sed -i s/POD_CIDR/${POD_CIDR}/g calico.yaml
 
 kubectl apply -f calico.yaml
